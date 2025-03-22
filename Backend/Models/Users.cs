@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 public enum Role{
     User,
     Banker,
@@ -13,6 +11,7 @@ public class DBUser{
     public required string Email { get; set; }
     public required string PasswordHash { get; set; }
     public Role Role { get; set; }
+    public bool Bankrupt { get; set; }
 }
 
 public class User{
@@ -20,11 +19,13 @@ public class User{
     private string _LastName;
     private string _Email;
     private int _UserID;
+    private bool _Bankrupt;
     private FreeAccount? _Account;
     private SavingAccount? _SavingAccount;
     private CreditAccount? _CreditAccount;
 
-    public User(string FirstName, string LastName, string Email, int UserID, FreeAccount? Account, SavingAccount? SavingAccount, CreditAccount? CreditAccount){
+    public User(string FirstName, string LastName, string Email, int UserID, FreeAccount? Account, SavingAccount? SavingAccount, CreditAccount? CreditAccount, bool Bankrupt = false){
+        _Bankrupt = Bankrupt;
         _FirstName = FirstName;
         _LastName = LastName;
         _Email = Email;
@@ -37,7 +38,7 @@ public class User{
 
 public class Banker : User{
     // Banker doesnt need accounts
-    public Banker(string FirstName, string LastName, string Email, int UserID) : base(FirstName, LastName, Email, UserID, null, null, null){
+    public Banker(string FirstName, string LastName, string Email, int UserID) : base(FirstName, LastName, Email, UserID, null, null, null, false){
     }
 }
 
