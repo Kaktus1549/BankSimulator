@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS Users (
+    UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+    FirstName VARCHAR(255) NOT NULL,
+    LastName VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    Role ENUM('User', 'Banker', 'Admin') NOT NULL DEFAULT 'User'
+);
