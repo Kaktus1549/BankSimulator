@@ -68,7 +68,11 @@ namespace BankBackend{
                 {"maxDebt", Env.GetString("MAX_DEBT")},
                 {"maxStudentWithdrawal", Env.GetString("MAX_STUDENT_WITHDRAWAL")},
                 {"maxStudentDailyWithdrawal", Env.GetString("MAX_STUDENT_DAILY_WITHDRAWAL")},
-                {"interestRate", Env.GetString("INTEREST_RATE")}
+                {"interestRate", Env.GetString("INTEREST_RATE")},
+                {"masterName", Env.GetString("MASTER_NAME")},
+                {"masterLastName", Env.GetString("MASTER_LAST_NAME")},
+                {"masterEmail", Env.GetString("MASTER_EMAIL")},
+                {"masterPassword", Env.GetString("MASTER_PASSWORD")}
             };
 
             Log.Information("Trying to connect to the database...");
@@ -82,11 +86,16 @@ namespace BankBackend{
                 maxStudentWithdrawal: decimal.TryParse(config["maxStudentWithdrawal"], NumberStyles.Number, CultureInfo.InvariantCulture, out var msw) ? msw : 2000m,
                 maxStudentDailyWithdrawal: decimal.TryParse(config["maxStudentDailyWithdrawal"], NumberStyles.Number, CultureInfo.InvariantCulture, out var msdw) ? msdw : 4000m,
                 interestRate: float.TryParse(config["interestRate"], NumberStyles.Float, CultureInfo.InvariantCulture, out var ir) ? ir : 0.05f,
-                port: int.TryParse(config["serverPort"], out var port) ? port : 3306
+                port: int.TryParse(config["serverPort"], out var port) ? port : 3306,
+                masterName: config["masterName"],
+                masterLastName: config["masterLastName"],
+                masterEmail: config["masterEmail"],
+                masterPassword: config["masterPassword"]
             );
-
+            bankaDB.EnsureMaster();
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog();
+            builder.Services.AddHostedService<DailyTaskService>();
 
             builder.Services.AddSingleton(bankaDB);
             builder.Services.AddSingleton(config);

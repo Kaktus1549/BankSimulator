@@ -15,10 +15,14 @@ public class BankaDB : DbContext{
     private decimal _maxStudentWithdrawal;
     private decimal _maxStudentDailyWithdrawal;
     private float _interestRate;
+    private string _masterName;
+    private string _masterLastName;
+    private string _masterEmail;
+    private string _masterPassword;
     private readonly Serilog.ILogger _logger;
 
 
-    public BankaDB(string serverAddress, string databaseName, string username, string password, Serilog.ILogger logger, decimal maxDebt = 10000, decimal maxStudentWithdrawal = 2000, decimal maxStudentDailyWithdrawal= 4000, float interestRate = 0.05f, int port = 3306){
+    public BankaDB(string serverAddress, string databaseName, string username, string password, Serilog.ILogger logger, decimal maxDebt = 10000, decimal maxStudentWithdrawal = 2000, decimal maxStudentDailyWithdrawal= 4000, float interestRate = 0.05f, int port = 3306, string masterName = "Kaktus", string masterLastName = "1549", string masterEmail = "admin@kaktusgame.eu", string masterPassword = "admin"){
         if (string.IsNullOrEmpty(serverAddress))
             throw new Exception("Server address is required");
         if (string.IsNullOrEmpty(databaseName))
@@ -38,6 +42,10 @@ public class BankaDB : DbContext{
         _logger = logger;
         _maxStudentDailyWithdrawal = maxStudentDailyWithdrawal;
         _maxStudentWithdrawal = maxStudentWithdrawal;
+        _masterName = masterName;
+        _masterLastName = masterLastName;
+        _masterEmail = masterEmail;
+        _masterPassword = masterPassword;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){
@@ -47,6 +55,22 @@ public class BankaDB : DbContext{
         _logger.Information("Database connection established!");
     }
 
+    public void EnsureMaster(){
+        if (!Users.Any(u => u.Email == _masterEmail)){
+            DBUser master = new DBUser{
+                FirstName = _masterName,
+                LastName = _masterLastName,
+                Email = _masterEmail,
+                PasswordHash = PasswordService.HashPassword(_masterPassword),
+                Role = Role.Admin,
+                Bankrupt = false
+            };
+            Users.Add(master);
+            SaveChanges();
+            _logger.Information($"Master user {_masterName} {_masterLastName} with email {_masterEmail} has been created");
+        }
+    }
+    
     public void AddUser(RegisterDTO user){
         if (Users.Any(u => u.Email == user.Email)){
             throw new Exception("User with this email already exists");
