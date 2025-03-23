@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 public enum Role{
     User,
     Banker,
@@ -5,6 +7,7 @@ public enum Role{
 }
 
 public class DBUser{
+    [Key]
     public int UserID { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }

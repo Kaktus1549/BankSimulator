@@ -1,9 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text.Json.Nodes;
 using Microsoft.IdentityModel.Tokens;
 
 public class JWT{
-    public string GenerateJwtToken(string secretKey, string issuer, Dictionary<string, string> data, string aud)
+    public static string GenerateJwtToken(string secretKey, string issuer, Dictionary<string, string> data, string aud)
     {
         var keyBytes = Convert.FromBase64String(secretKey);
         var securityKey = new SymmetricSecurityKey(keyBytes);
@@ -28,7 +29,7 @@ public class JWT{
         var tokenHandler = new JwtSecurityTokenHandler();
         return tokenHandler.WriteToken(token);
     }
-    public bool ValidateJwtToken(string token, string secretKey, string issuer, string aud)
+    public static bool ValidateJwtToken(string token, string secretKey, string issuer, string aud)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var keyBytes = Convert.FromBase64String(secretKey);
@@ -55,13 +56,27 @@ public class JWT{
             return false;
         }
     }
-    public string DecodeJWT(string token)
+    public static Dictionary<string, string> DecodeJWT(string token)
     {
         var handler = new JwtSecurityTokenHandler();
         var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
         if (jsonToken == null){
             throw new Exception("Invalid JWT token.");
         }
-        return jsonToken.Claims.First(claim => claim.Type == "username").Value;
+        // Return the payload of the JWT (claims)
+
+        // claims{
+        // "user_id": 1,
+        // "email": "mail@e.com",
+        // "role": "admin"
+        //}
+        
+        //Create a dictionary to store the claims
+        var claims = new Dictionary<string, string>();
+        foreach (var claim in jsonToken.Claims)
+        {
+            claims.Add(claim.Type, claim.Value);
+        }
+        return claims;
     }
 }
