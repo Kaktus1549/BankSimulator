@@ -11,6 +11,9 @@ COPY . ./
 # Build the application
 RUN dotnet publish -c Release -o /app/out
 
+RUN dotnet ef migrations add InitialCreate
+RUN dotnet ef database update
+
 # Use the .NET Runtime image to run the app
 # This is the runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0

@@ -38,14 +38,6 @@
             });
         </script>
         <script>
-            window.displayTickerAlert2 = (symbol, price) => {
-                if (price < 20) {
-                    alert(`${symbol}: $${price}!`);
-                    return "User alerted in the browser.";
-                } else {
-                    return "User NOT alerted.";
-                }
-            };
             window.initDataTable = (tableId) => {
                 const table = document.getElementById(tableId);
                 if (table) {
@@ -54,9 +46,6 @@
                 } else {
                     console.warn(`Table with id ${tableId} not found.`);
                 }
-            };
-            window.displayTickerAlert1 = (symbol, price) => {
-                alert(`${symbol}: $${price}!`);
             };
             window.FetchLSKey = (key) => {
                 return localStorage.getItem(key) || null;
@@ -147,64 +136,80 @@
             }
         </script>
         <script>
-            window.onload = async () => {
-            async function Validate() {
-                // Fetch /api/validate to check if the token is valid
-                const response = await fetch('/api/validate', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+            async function addHandler(){
+                let sidebarToggle = document.getElementById('sidebarToggle');
+                while (!sidebarToggle) {
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for the element to be available
+                    sidebarToggle = document.getElementById('sidebarToggle');
+                }
+                if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
+                    document.body.classList.toggle('sb-sidenav-toggled');
+                }
+                sidebarToggle.addEventListener('click', event => {
+                    event.preventDefault();
+                    document.body.classList.toggle('sb-sidenav-toggled');
+                    localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
                 });
-                if (response.status === 400 || response.data == "Invalid token") {
-                    if (!window.location.href.includes("login")) {
-                        window.location.href = "/login";
-                    }
-                    return;
-                }
-                if (response.status !== 200){
-                    alert("Error: " + response.status);
-                    return;
-                }
-                // Update the account data
-                await window.GetAccountsData();
-                // Update local storage values (just email, role, lastName, firstName)
-                const data = await response.json();
-                localStorage.setItem('email', data.email);
-                localStorage.setItem('role', data.role);
-                localStorage.setItem('lastName', data.lastName);
-                localStorage.setItem('firstName', data.firstName);
-
-                if (data.role === "Admin" || data.role === "Banker"){
-                // Delete accounts from local storage, since they are not needed
-                localStorage.removeItem("FreeAccountNumber");
-                localStorage.removeItem("SavingAccountNumber");
-                localStorage.removeItem("CreditAccountNumber");
-
-                localStorage.removeItem("FreeAccountBalance");
-                localStorage.removeItem("SavingAccountBalance");
-                localStorage.removeItem("CreditAccountBalance");
-                }
             }
-            // Check for "firstName", "lastName", "email" and "role" in localStorage, if not found, redirect to login page
-            if (!localStorage.getItem("firstName") || !localStorage.getItem("lastName") || !localStorage.getItem("email") || !localStorage.getItem("role")) {
-                // if not already on the login page, redirect to login page
-                await Validate();
+            window.onload = async () => {
+                addHandler();
+                async function Validate() {
+                    // Fetch /api/validate to check if the token is valid
+                    const response = await fetch('/api/validate', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    });
+                    if (response.status === 400 || response.data == "Invalid token") {
+                        if (!window.location.href.includes("login")) {
+                            window.location.href = "/login";
+                        }
+                        return;
+                    }
+                    if (response.status !== 200){
+                        alert("Error: " + response.status);
+                        return;
+                    }
+                    // Update the account data
+                    await window.GetAccountsData();
+                    // Update local storage values (just email, role, lastName, firstName)
+                    const data = await response.json();
+                    localStorage.setItem('email', data.email);
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('lastName', data.lastName);
+                    localStorage.setItem('firstName', data.firstName);
+
+                    if (data.role === "Admin" || data.role === "Banker"){
+                    // Delete accounts from local storage, since they are not needed
+                    localStorage.removeItem("FreeAccountNumber");
+                    localStorage.removeItem("SavingAccountNumber");
+                    localStorage.removeItem("CreditAccountNumber");
+
+                    localStorage.removeItem("FreeAccountBalance");
+                    localStorage.removeItem("SavingAccountBalance");
+                    localStorage.removeItem("CreditAccountBalance");
+                    }
+                }
+                // Check for "firstName", "lastName", "email" and "role" in localStorage, if not found, redirect to login page
                 if (!localStorage.getItem("firstName") || !localStorage.getItem("lastName") || !localStorage.getItem("email") || !localStorage.getItem("role")) {
-                    if (!window.location.href.includes("login")) {
-                        window.location.href = "/login";
+                    // if not already on the login page, redirect to login page
+                    await Validate();
+                    if (!localStorage.getItem("firstName") || !localStorage.getItem("lastName") || !localStorage.getItem("email") || !localStorage.getItem("role")) {
+                        if (!window.location.href.includes("login")) {
+                            window.location.href = "/login";
+                        }
                     }
                 }
+                if (!window.location.href.includes("login") && !window.location.href.includes("register")) {
+                    await Validate();
+                    // Check if the user is an admin or banker
+                    if (localStorage.getItem("role") !== "Admin" && localStorage.getItem("role") !== "Banker"){
+                        await window.GetAccountsData(true);
+                        console.log("FreeAccountNumber: " + localStorage.getItem("FreeAccountNumber"));
+                    } 
+                }
             }
-            if (!window.location.href.includes("login") && !window.location.href.includes("register")) {
-                await Validate();
-                // Check if the user is an admin or banker
-                if (localStorage.getItem("role") !== "Admin" && localStorage.getItem("role") !== "Banker"){
-                    await window.GetAccountsData(true);
-                    console.log("FreeAccountNumber: " + localStorage.getItem("FreeAccountNumber"));
-                } 
-            }
-        }
         </script>
     </body>
 </html>

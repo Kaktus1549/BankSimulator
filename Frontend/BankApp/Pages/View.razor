@@ -188,8 +188,8 @@
             await JS.InvokeVoidAsync("ChartArea", email);
             await JS.InvokeVoidAsync("ChartBar", email);
             
-            StateHasChanged();
         }
+        StateHasChanged();
     }
 
     private async Task FetchRole()
