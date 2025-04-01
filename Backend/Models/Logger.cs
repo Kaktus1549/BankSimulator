@@ -1,12 +1,21 @@
 using Serilog.Core;
 using Serilog.Events;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class DBLog{
     [Key]
     public int LogID { get; set; }
+
+    [ForeignKey("UserID")]    
+    public DBUser? User { get; set; }
     public int UserID { get; set; }
+
+    [ForeignKey("SrcAccID")]
+    public DBFreeAccount? SrcAcc { get; set; }
     public int SrcAccID { get; set; }
+    [ForeignKey("DestAccID")]
+    public DBFreeAccount? DestAcc { get; set; }
     public int DestAccID { get; set; }
     public AccountType SrcAccType { get; set; }
     public AccountType DestAccType { get; set; }

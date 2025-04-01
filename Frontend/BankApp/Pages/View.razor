@@ -142,6 +142,7 @@
 }
 @code{
     private bool loaded = false;
+    private bool chartsInitialized = false;
     private string FreeAccountNumber = "Loading...";
     private int FreeAccountBalance = 0;
     private string SavingAccountNumber = "Loading...";
@@ -166,6 +167,7 @@
         var userData = await JS.InvokeAsync<UserData>("ViewUser");
         if(userData != null)
         {
+            // Update your state
             name = userData.Name;
             email = userData.Email;
             
@@ -184,22 +186,19 @@
             }
 
             loaded = true;
+            chartsInitialized = false; // Reset flag to initialize charts in OnAfterRenderAsync
+            StateHasChanged();
+        }
+    }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Check if the view is loaded and charts have not been initialized
+        if (loaded && !chartsInitialized)
+        {
             await JS.InvokeVoidAsync("ChartArea", email);
             await JS.InvokeVoidAsync("ChartBar", email);
-            
+            chartsInitialized = true;
         }
-        StateHasChanged();
-    }
-
-    private async Task FetchRole()
-    {
-        role = await JS.InvokeAsync<string>("FetchLSKey", "role");
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await FetchRole();
-        StateHasChanged();
     }
 }

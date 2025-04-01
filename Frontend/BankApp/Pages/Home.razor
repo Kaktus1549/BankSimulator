@@ -70,7 +70,7 @@
             </div>
         </div>
     }
-    @if (role == "Admin" || role == "Banker" && name != "Loading..."){
+    @if ((role == "Admin" || role == "Banker") && name != "Loading..."){
         // Admin or Banker view
         // It will just print the name, email and role of the user
         <div class="alert alert-info" role="alert">
@@ -139,13 +139,9 @@
 
     private string lastUpdated = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
-    private async Task UpdateData(){
-        await JS.InvokeVoidAsync("GetAccountsData", "true");
-    }
-
     private async Task FetchData()
     {
-        List<string> list = await JS.InvokeAsync<List<string>>("GetAccountsData");
+        List<string> list = await JS.InvokeAsync<List<string>>("GetAccountsData", "true");
         string firstName = await JS.InvokeAsync<string>("FetchLSKey", "firstName");
         string mail = await JS.InvokeAsync<string>("FetchLSKey", "email");
         string lastName = await JS.InvokeAsync<string>("FetchLSKey", "lastName");
@@ -153,21 +149,20 @@
 
         role = fetchRole;
         name = $"{firstName} {lastName}";
-        FreeAccountNumber = list[0];
-        SavingAccountNumber = list[1];
-        CreditAccountNumber = list[2];
-
         email = mail;
-
-        FreeAccountBalance = int.Parse(list[3]);
-        SavingAccountBalance = int.Parse(list[4]);
-        CreditAccountBalance = int.Parse(list[5]);
+        if(role == "User"){
+            FreeAccountNumber = list[0];
+            SavingAccountNumber = list[1];
+            CreditAccountNumber = list[2];
+            FreeAccountBalance = int.Parse(list[3]);
+            SavingAccountBalance = int.Parse(list[4]);
+            CreditAccountBalance = int.Parse(list[5]);
+        }
     }
 
     // On page load
     protected override async Task OnInitializedAsync()
     {
-        await UpdateData();
         await FetchData();
         // Wait for the JS to load
         if (role == "User"){
@@ -179,7 +174,17 @@
             JS.InvokeVoidAsync("BankerChart");
         }
         if (role == "Admin"){
+            // Wait for the JS to load
+            await Task.Delay(10);
             JS.InvokeVoidAsync("PieFetch");
+            StateHasChanged();
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && role == "Admin")
+        {
+            await JS.InvokeVoidAsync("PieFetch");
         }
     }
 }

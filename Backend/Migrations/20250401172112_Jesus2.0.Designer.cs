@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(BankaDB))]
-    partial class BankaDBModelSnapshot : ModelSnapshot
+    [Migration("20250401172112_Jesus2.0")]
+    partial class Jesus20
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,12 +86,6 @@ namespace Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("LogID");
-
-                    b.HasIndex("DestAccID");
-
-                    b.HasIndex("SrcAccID");
-
-                    b.HasIndex("UserID");
 
                     b.ToTable("logs", (string)null);
                 });
@@ -210,33 +207,6 @@ namespace Backend.Migrations
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DBLog", b =>
-                {
-                    b.HasOne("DBFreeAccount", "DestAcc")
-                        .WithMany()
-                        .HasForeignKey("DestAccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DBFreeAccount", "SrcAcc")
-                        .WithMany()
-                        .HasForeignKey("SrcAccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DBUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DestAcc");
-
-                    b.Navigation("SrcAcc");
 
                     b.Navigation("User");
                 });

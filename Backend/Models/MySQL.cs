@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog.Debugging;
 using System.Globalization;
 
 public class BankaDB : DbContext
@@ -45,6 +46,8 @@ public class BankaDB : DbContext
         _masterEmail = configuration["MASTER_EMAIL"] ?? "admin@kaktusgame.eu";
         _masterPassword = configuration["MASTER_PASSWORD"] ?? "admin";
         _logger = logger;
+
+        this.EnsureMaster().Wait();
     }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){
         string connectionString = $"Server={_serverAddress};Port={_port};Database={_databaseName};Uid={_username};Pwd={_password};";
@@ -52,6 +55,17 @@ public class BankaDB : DbContext
                                 mysqlOptions => mysqlOptions.EnableRetryOnFailure());
         _logger.Information("Database connection established!");
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DBUser>().ToTable("users");
+        modelBuilder.Entity<DBLog>().ToTable("logs");
+        modelBuilder.Entity<DBFreeAccount>().ToTable("free_accounts");
+        modelBuilder.Entity<DBSavingAccount>().ToTable("saving_accounts");
+        modelBuilder.Entity<DBCreditAccount>().ToTable("credit_accounts");
+        modelBuilder.Entity<DBStatistics>().ToTable("statistics");
+    }
+
     public async Task EnsureMaster(){
         if (!Users.Any(u => u.Email == _masterEmail)){
             var master = new DBUser{
@@ -333,15 +347,15 @@ public class BankaDB : DbContext
 
         // Get source and destination accounts
         var srcAcc = srcAccountType switch{
-            AccountType.Free => FreeAccounts.Where(a => a.AccID == srcAccID && a.GetType() == typeof(DBFreeAccount)).FirstOrDefault(),
-            AccountType.Saving => SavingAccounts.Where(a => a.AccID == srcAccID && a.GetType() == typeof(DBSavingAccount)).FirstOrDefault(),
-            AccountType.Credit => CreditAccounts.Where(a => a.AccID == srcAccID && a.GetType() == typeof(DBCreditAccount)).FirstOrDefault(),
+            AccountType.Free => FreeAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
+            AccountType.Saving => SavingAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
+            AccountType.Credit => CreditAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
             _ => null
         };
         var destAcc = destAccountType switch{
-            AccountType.Free => FreeAccounts.Where(a => a.AccID == destAccID && a.GetType() == typeof(DBFreeAccount)).FirstOrDefault(),
-            AccountType.Saving => SavingAccounts.Where(a => a.AccID == destAccID && a.GetType() == typeof(DBSavingAccount)).FirstOrDefault(),
-            AccountType.Credit => CreditAccounts.Where(a => a.AccID == destAccID && a.GetType() == typeof(DBCreditAccount)).FirstOrDefault(),
+            AccountType.Free => FreeAccounts.Where(a => a.AccID == destAccID ).FirstOrDefault(),
+            AccountType.Saving => SavingAccounts.Where(a => a.AccID == destAccID ).FirstOrDefault(),
+            AccountType.Credit => CreditAccounts.Where(a => a.AccID == destAccID ).FirstOrDefault(),
             _ => null
         };
 
@@ -408,13 +422,13 @@ public class BankaDB : DbContext
         }
         if (dbUser.Role == Role.User){
             DBFreeAccount? freeAccount = FreeAccounts
-                .Where(a => a.UserID == userID && a.GetType() == typeof(DBFreeAccount))
+                .Where(a => a.UserID == userID )
                 .FirstOrDefault();
             DBSavingAccount? savingAccount = SavingAccounts
-                .Where(a => a.UserID == userID && a.GetType() == typeof(DBSavingAccount))
+                .Where(a => a.UserID == userID )
                 .FirstOrDefault();
             DBCreditAccount? creditAccount = CreditAccounts
-                .Where(a => a.UserID == userID && a.GetType() == typeof(DBCreditAccount))
+                .Where(a => a.UserID == userID )
                 .FirstOrDefault();
             return Task.FromResult<User?>(new User(dbUser.FirstName, dbUser.LastName, dbUser.Email, dbUser.UserID, freeAccount != null ? new FreeAccount(freeAccount.AccID, freeAccount.UserID, freeAccount.Balance) : null, savingAccount != null ? new SavingAccount(savingAccount.AccID, savingAccount.UserID, savingAccount.Balance, savingAccount.Student, savingAccount.DailyWithdrawal) : null, creditAccount != null ? new CreditAccount(creditAccount.AccID, creditAccount.UserID, creditAccount.Balance, creditAccount.MaturityDate) : null, dbUser.Bankrupt));
         }
@@ -437,13 +451,13 @@ public class BankaDB : DbContext
 
     public Task<List<int>> GetBalance(int userID){
         DBFreeAccount? freeAccount = FreeAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBFreeAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
         DBSavingAccount? savingAccount = SavingAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBSavingAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
         DBCreditAccount? creditAccount = CreditAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBCreditAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
 
         var balances = new List<int>
@@ -464,15 +478,23 @@ public class BankaDB : DbContext
     }
 
     public Task<List<string>> GetAccountIDs(int userID){
+        // Check if user is admin or banker, if yes return undefined
+        DBUser? user = Users.FirstOrDefault(u => u.UserID == userID);
+        if (user == null){
+            throw new Exception("User not found");
+        }
+        if (user.Role == Role.Admin || user.Role == Role.Banker){
+            return Task.FromResult<List<string>>(new List<string> { "undefined" });
+        }
         List<string> accountIDs = new List<string>();
         DBFreeAccount? freeAccount = FreeAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBFreeAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
         DBSavingAccount? savingAccount = SavingAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBSavingAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
         DBCreditAccount? creditAccount = CreditAccounts
-            .Where(a => a.UserID == userID && a.GetType() == typeof(DBCreditAccount))
+            .Where(a => a.UserID == userID )
             .FirstOrDefault();
         if (freeAccount != null){
             accountIDs.Add(freeAccount.AccID.ToString() + "/001");
@@ -684,13 +706,13 @@ public class BankaDB : DbContext
 
         if (user.Role == Role.User){
             DBFreeAccount? freeAccount = FreeAccounts
-                .Where(a => a.UserID == user.UserID && a.GetType() == typeof(DBFreeAccount))
+                .Where(a => a.UserID == user.UserID)
                 .FirstOrDefault();
             DBSavingAccount? savingAccount = SavingAccounts
-                .Where(a => a.UserID == user.UserID && a.GetType() == typeof(DBSavingAccount))
+                .Where(a => a.UserID == user.UserID)
                 .FirstOrDefault();
             DBCreditAccount? creditAccount = CreditAccounts
-                .Where(a => a.UserID == user.UserID && a.GetType() == typeof(DBCreditAccount))
+                .Where(a => a.UserID == user.UserID)
                 .FirstOrDefault();
             _logger.Information($"User {user.FirstName} {user.LastName} with email {user.Email} has been found");
             return Task.FromResult<User?>(new User(user.FirstName, user.LastName, user.Email, user.UserID, freeAccount != null ? new FreeAccount(freeAccount.AccID, freeAccount.UserID, freeAccount.Balance) : null, savingAccount != null ? new SavingAccount(savingAccount.AccID, savingAccount.UserID, savingAccount.Balance, savingAccount.Student, savingAccount.DailyWithdrawal) : null, creditAccount != null ? new CreditAccount(creditAccount.AccID, creditAccount.UserID, creditAccount.Balance, creditAccount.MaturityDate) : null, user.Bankrupt));

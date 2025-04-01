@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Bogus;
 
 public enum AccountType{
@@ -10,7 +11,10 @@ public enum AccountType{
 public class DBFreeAccount{
     [Key]
     public int AccID { get; set; }
+    [ForeignKey("UserID")]
+    public DBUser? User { get; set; }
     public int UserID { get; set; }
+
     public decimal Balance { get; set; }
     public decimal[]? BalanceHistory { get; set; }
     public DateTime BalanceLastUpdated { get; set; }

@@ -73,7 +73,7 @@
         </main>
     </div>
 </div>
-<script src="js/emailregex.js"></script>
+<script src="js/emailreg.js"></script>
 <script>
     function NullCheck(firstName, lastName, email, password, passwordConfirm) {
         // Check if any of the input fields are empty
@@ -84,7 +84,7 @@
         return true;
     }
 
-    function Reg(){
+    async function Reg(){
         // Send data to /api/register endpoint
 
         // Get data from input fields
@@ -105,7 +105,7 @@
             return;
         }
 
-        let roleId = inputUserType.value === 'User' ? 1 : inputUserType.value === 'Banker' ? 2 : 3;
+        let roleId = inputUserType.value === 'User' ? 0 : inputUserType.value === 'Banker' ? 1 : 2;
 
         // Check if password and confirm password match
         if (inputPassword.value !== inputPasswordConfirm.value) {
@@ -122,50 +122,45 @@
         };
 
         // Send data to /api/register endpoint
-        fetch('/api/register', {
+        let response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(newUser)
         })
-            .then(response => response.json())
-            .then(data => {
-                // Check response code
-                if (data.code === 200) {
-                    alert('User registered successfully');
-                    window.location.href = '/';
-                } else {
-                    // Example response
-                    // {
-                    //     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                    //     "title": "One or more validation errors occurred.",
-                    //     "status": 400,
-                    //     "errors": {
-                    //         "Email": [
-                    //             "Email is required"
-                    //         ]
-                    //     },
-                    //     "traceId": "00-8b821b07be43c31645523da4400924ee-fc7aa8e5b69f365e-00"
-                    // }
+        console.log(response);
+        if (response.status === 200) {
+            alert('User created successfully');
+            // Redirect to login page
+            window.location.href = '/';
+        } else {
+            let data = await response.json();
+            // Example response
+            // {
+            //     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            //     "title": "One or more validation errors occurred.",
+            //     "status": 400,
+            //     "errors": {
+            //         "Email": [
+            //             "Email is required"
+            //         ]
+            //     },
+            //     "traceId": "00-8b821b07be43c31645523da4400924ee-fc7aa8e5b69f365e-00"
+            // }
 
-                    // Get error messages
-                    let errors = data.errors;
-                    let errorMessages = '';
+            // Get error messages
+            let errors = data.errors;
+            let errorMessages = '';
 
-                    // Loop through errors
-                    for (const key in errors) {
-                        errorMessages += `${errors[key][0]}\n`;
-                    }
+            // Loop through errors
+            for (const key in errors) {
+                errorMessages += `${errors[key].split(': ')[1] }\n`;
+            }
 
-                    // Show error messages
-                    alert(errorMessages);
-                }
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            // Show error messages
+            alert(errorMessages);
+        }
     }
 </script>
 

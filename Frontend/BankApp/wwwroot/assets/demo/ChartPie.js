@@ -14,8 +14,8 @@ async function PieFetch() {
   if (response.status === 200){
     let data = await response.json();
     apiData[0] = data.totalUsersCount;
-    apiData[1] = data.totalAdminCount;
-    apiData[2] = data.totalBankerCount;
+    apiData[1] = data.totalBankerCount;
+    apiData[2] = data.totalAdminCount;
 
     localStorage.setItem('lastUpdated', data.lastUpdated);
   }

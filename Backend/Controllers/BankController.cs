@@ -147,6 +147,9 @@ public class apiController : ControllerBase
         if (data == null){
             return BadRequest("Invalid token.");
         }
+        if (data["role"] != "User"){
+            return BadRequest("Only users can view their balance.");
+        }
         int userId = int.Parse(data["user_id"]);
         var balance = await _db.GetBalance(userId);
         return Ok(balance);
@@ -157,6 +160,9 @@ public class apiController : ControllerBase
         Dictionary<string, string>? data = ValidateUser(Request);
         if (data == null){
             return BadRequest("Invalid token.");
+        }
+        if (data["role"] != "User"){
+            return BadRequest("Only users can view their accounts.");
         }
         int userId = int.Parse(data["user_id"]);
         var accounts =  await _db.GetAccountIDs(userId);

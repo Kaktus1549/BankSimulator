@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(BankaDB))]
-    partial class BankaDBModelSnapshot : ModelSnapshot
+    [Migration("20250401170421_ForeignKeysIntroduced")]
+    partial class ForeignKeysIntroduced
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,16 +41,21 @@ namespace Backend.Migrations
                     b.Property<DateTime>("BalanceLastUpdated")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("varchar(21)");
+
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("AccID");
 
-                    b.HasIndex("UserID");
+                    b.ToTable("FreeAccounts");
 
-                    b.ToTable("free_accounts", (string)null);
+                    b.HasDiscriminator().HasValue("DBFreeAccount");
 
-                    b.UseTptMappingStrategy();
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("DBLog", b =>
@@ -84,13 +92,7 @@ namespace Backend.Migrations
 
                     b.HasKey("LogID");
 
-                    b.HasIndex("DestAccID");
-
-                    b.HasIndex("SrcAccID");
-
-                    b.HasIndex("UserID");
-
-                    b.ToTable("logs", (string)null);
+                    b.ToTable("Logs");
                 });
 
             modelBuilder.Entity("DBStatistics", b =>
@@ -136,7 +138,7 @@ namespace Backend.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("statistics", (string)null);
+                    b.ToTable("Statistics");
                 });
 
             modelBuilder.Entity("DBUser", b =>
@@ -171,7 +173,7 @@ namespace Backend.Migrations
 
                     b.HasKey("UserID");
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("DBCreditAccount", b =>
@@ -181,7 +183,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("MaturityDate")
                         .HasColumnType("datetime(6)");
 
-                    b.ToTable("credit_accounts", (string)null);
+                    b.HasDiscriminator().HasValue("DBCreditAccount");
                 });
 
             modelBuilder.Entity("DBSavingAccount", b =>
@@ -200,63 +202,7 @@ namespace Backend.Migrations
                     b.Property<bool>("Student")
                         .HasColumnType("tinyint(1)");
 
-                    b.ToTable("saving_accounts", (string)null);
-                });
-
-            modelBuilder.Entity("DBFreeAccount", b =>
-                {
-                    b.HasOne("DBUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DBLog", b =>
-                {
-                    b.HasOne("DBFreeAccount", "DestAcc")
-                        .WithMany()
-                        .HasForeignKey("DestAccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DBFreeAccount", "SrcAcc")
-                        .WithMany()
-                        .HasForeignKey("SrcAccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DBUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DestAcc");
-
-                    b.Navigation("SrcAcc");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DBCreditAccount", b =>
-                {
-                    b.HasOne("DBFreeAccount", null)
-                        .WithOne()
-                        .HasForeignKey("DBCreditAccount", "AccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("DBSavingAccount", b =>
-                {
-                    b.HasOne("DBFreeAccount", null)
-                        .WithOne()
-                        .HasForeignKey("DBSavingAccount", "AccID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasDiscriminator().HasValue("DBSavingAccount");
                 });
 #pragma warning restore 612, 618
         }
