@@ -11,7 +11,7 @@ RUN dotnet build *.csproj -c Release -o /app/build
 
 FROM build AS publish
 # Copy the rest of the application code and publish it in Release configuration
-RUN dotnet publish -c Release -o /app/out
+RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage: use Nginx to serve the static files
 FROM nginx:alpine AS final
