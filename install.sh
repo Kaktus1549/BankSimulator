@@ -42,8 +42,8 @@ echo "Backend configuration"
 echo "----------------------"
 echo ""
 
-read -sp "Enter JWT secret (default: iC9HnyvwJjEt7/J/TkRJU+jxQh4/X6f80pjkQRd4W8E=): " JWT_SECRET
-JWT_SECRET=${JWT_SECRET:-iC9HnyvwJjEt7/J/TkRJU+jxQh4/X6f80pjkQRd4W8E=}
+read -sp "Enter JWT secret (default: None): " JWT_SECRET
+JWT_SECRET=${JWT_SECRET:-}
 echo ""
 read -p "Enter JWT issuer (default: SvecovinaBanka): " JWT_ISSUER
 JWT_ISSUER=${JWT_ISSUER:-SvecovinaBanka}
