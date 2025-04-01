@@ -4,7 +4,6 @@ using DotNetEnv;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace BankBackend{
     public class Program{
 
@@ -19,7 +18,6 @@ namespace BankBackend{
             // Save the generated key to the .env file
             File.AppendAllText(".env", $"\nJWT_SECRET=\"{secret}\"");
 
-            // Convert the key to a base64 string
             return secret;
         }
 
@@ -33,13 +31,13 @@ namespace BankBackend{
                     outputTemplate: outputTemplate,
                     theme: new AnsiConsoleTheme(new Dictionary<ConsoleThemeStyle, string>
                     {
-                        [ConsoleThemeStyle.Text] = "\x1b[90m",                 // grey
-                        [ConsoleThemeStyle.LevelDebug] = "\x1b[34m",           // blue
-                        [ConsoleThemeStyle.LevelInformation] = "\x1b[34m",     // blue
-                        [ConsoleThemeStyle.LevelWarning] = "\x1b[33m",         // yellow
-                        [ConsoleThemeStyle.LevelError] = "\x1b[31m",           // red
-                        [ConsoleThemeStyle.LevelFatal] = "\x1b[31m",           // red
-                        [ConsoleThemeStyle.SecondaryText] = "\x1b[32m",        // green
+                        [ConsoleThemeStyle.Text] = "\x1b[90m",                 
+                        [ConsoleThemeStyle.LevelDebug] = "\x1b[34m",           
+                        [ConsoleThemeStyle.LevelInformation] = "\x1b[34m",     
+                        [ConsoleThemeStyle.LevelWarning] = "\x1b[33m",         
+                        [ConsoleThemeStyle.LevelError] = "\x1b[31m",           
+                        [ConsoleThemeStyle.LevelFatal] = "\x1b[31m",           
+                        [ConsoleThemeStyle.SecondaryText] = "\x1b[32m",        
                     })
                 )
                 .WriteTo.File(
@@ -62,7 +60,6 @@ namespace BankBackend{
                 {"databaseName", Env.GetString("DB_NAME")},
                 {"username", Env.GetString("DB_USERNAME")},
                 {"password", Env.GetString("DB_PASSWORD")},
-                // If JWT_SECRET generate and store a new secret 
                 {"jwtSecret", Env.GetString("JWT_SECRET") ?? Generate256BitKey()},
                 {"issuer", Env.GetString("JWT_ISSUER")},
                 {"maxDebt", Env.GetString("MAX_DEBT")},
@@ -82,30 +79,25 @@ namespace BankBackend{
 
             builder.Services.AddDbContext<BankaDB>(options =>
             {
-                // Retrieve values from the environment or configuration
                 var serverAddress = Env.GetString("DB_SERVER_ADDRESS");
                 var serverPort = Env.GetString("DB_SERVER_PORT");
                 var databaseName = Env.GetString("DB_NAME");
                 var username = Env.GetString("DB_USERNAME");
                 var password = Env.GetString("DB_PASSWORD");
 
-                // Build the connection string
                 var connectionString = $"Server={serverAddress};Port={serverPort};Database={databaseName};User Id={username};Password={password};";
-
-                // Use the MySQL provider with auto-detection of the server version
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
             });
 
             builder.Services.AddSingleton(config);
             builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddCors(options => {
                 options.AddPolicy("AllowBlazorClient",
                     policy => policy
-                        .WithOrigins("http://localhost:5001","http://localhost:5002", "http://banka.kaktusgame.eu") // Replace with your client URL
+                        .WithOrigins("http://localhost:5001", "http://localhost:5002", "http://banka.kaktusgame.eu")
                         .AllowAnyHeader()
                         .AllowAnyMethod());
             });
@@ -113,15 +105,29 @@ namespace BankBackend{
             var app = builder.Build();
             app.UseCors("AllowBlazorClient");
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
             app.UseAuthorization();
-
             app.MapControllers();
+
+            // Apply any pending migrations on startup (creates DB/tables if not present)
+            using (var scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<BankaDB>();
+                    dbContext.Database.Migrate();
+                    Log.Information("Database migration completed successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "An error occurred while migrating the database.");
+                    // Optionally, rethrow or handle the error as needed.
+                }
+            }
 
             app.Run();
         }
