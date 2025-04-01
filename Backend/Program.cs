@@ -60,7 +60,8 @@ namespace BankBackend{
                 {"databaseName", Env.GetString("DB_NAME")},
                 {"username", Env.GetString("DB_USERNAME")},
                 {"password", Env.GetString("DB_PASSWORD")},
-                {"jwtSecret", Env.GetString("JWT_SECRET") ?? Generate256BitKey()},
+                // If JWT_SECRET is not set OR is empty, generate a new one and save it to the .env file
+                {"jwtSecret", Env.GetString("JWT_SECRET") == "" ? Generate256BitKey() : Env.GetString("JWT_SECRET")},
                 {"issuer", Env.GetString("JWT_ISSUER")},
                 {"maxDebt", Env.GetString("MAX_DEBT")},
                 {"maxStudentWithdrawal", Env.GetString("MAX_STUDENT_WITHDRAWAL")},
