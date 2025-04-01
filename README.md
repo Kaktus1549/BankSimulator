@@ -1,4 +1,4 @@
 # BankSimulator
 Simulation of bank system for school
 
-I am gonna need therapy after this
+Am I insane? Yes, definitely. Would I do this again? Yes. Why? Becuase when I do something, I'll do it properly
