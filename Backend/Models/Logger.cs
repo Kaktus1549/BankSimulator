@@ -33,18 +33,20 @@ public class DiscordSink : ILogEventSink
     private readonly string? _avatar;
     private readonly IFormatProvider? _formatProvider;
     private static readonly HttpClient _httpClient = new();
+    private bool _enabled = true;
 
-    public DiscordSink(string webhookUrl, string username, string? avatar = null, IFormatProvider? formatProvider = null)
-    {
+    public DiscordSink(string webhookUrl, string username, string? avatar = null, IFormatProvider? formatProvider = null, bool enabled = true){
         _webhookUrl = webhookUrl;
         _username = username;
         _avatar = avatar;
         _formatProvider = formatProvider;
+        _enabled = enabled;
     }
 
     public void Emit(LogEvent logEvent)
     {
         if (logEvent.Level < LogEventLevel.Information) return; // Skip Debug/Verbose
+        if (!_enabled) return; // Skip if disabled
 
         var message = logEvent.RenderMessage(_formatProvider);
         var timestamp = logEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");

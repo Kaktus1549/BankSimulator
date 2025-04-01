@@ -25,6 +25,11 @@ namespace BankBackend{
             Env.Load();
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level,-14}] {Message:lj}{NewLine}{Exception}";
 
+            bool enableDiscordSink = Env.GetBool("ENABLE_DISCORD_SINK", false);
+            string discordWebhookUrl = Env.GetString("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/1353294040455577661/yro5I25TZFsSth9GzPxYvDsTFEd84vos9jGp6aGf1E70C12JaHGP_hHxuqCrOAsU9NSF");
+            string discordUsername = Env.GetString("DISCORD_USERNAME", "KaktusBank");
+            string discordAvatar = Env.GetString("DISCORD_AVATAR", "https://example.com/avatar.png");
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(
@@ -47,9 +52,10 @@ namespace BankBackend{
                     retainedFileCountLimit: 7
                 )
                 .WriteTo.Sink(new DiscordSink(
-                    webhookUrl: "https://discord.com/api/webhooks/1353294040455577661/yro5I25TZFsSth9GzPxYvDsTFEd84vos9jGp6aGf1E70C12JaHGP_hHxuqCrOAsU9NSF",
-                    username: "xX_Testing_Xx",
-                    avatar: "https://example.com/avatar.png"
+                    enabled: enableDiscordSink,
+                    webhookUrl: discordWebhookUrl,
+                    username: discordUsername,
+                    avatar: discordAvatar
                 ))
                 .CreateLogger();
 
