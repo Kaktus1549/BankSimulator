@@ -54,3 +54,18 @@ public class transferDTO{
     [Required (ErrorMessage = "Amount is required")]
     public required decimal Amount { get; set; }
 }
+
+public class monthlyDTO{
+    [Required (ErrorMessage = "Email is required")]
+    public required string Email { get; set; }
+}
+
+public class dailyDTO{
+    [Required (ErrorMessage = "Email is required")]
+    public required string Email { get; set; }
+}
+
+public class SearchDTO{
+    [Required (ErrorMessage = "Search term is required")]
+    public required string SearchTerm { get; set; } // Either email or account number
+}

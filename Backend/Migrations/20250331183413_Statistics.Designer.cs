@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(BankaDB))]
-    partial class BankaDBModelSnapshot : ModelSnapshot
+    [Migration("20250331183413_Statistics")]
+    partial class Statistics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,12 +97,6 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("DBStatistics", b =>
                 {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
-
                     b.Property<int>("CreditAccountCount")
                         .HasColumnType("int");
 
@@ -115,12 +112,6 @@ namespace Backend.Migrations
                     b.Property<int>("TotalAccountCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("TotalAdminCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalBankerCount")
-                        .HasColumnType("int");
-
                     b.Property<string>("TotalDebt30Days")
                         .HasColumnType("longtext");
 
@@ -129,11 +120,6 @@ namespace Backend.Migrations
 
                     b.Property<int>("TotalUserCount")
                         .HasColumnType("int");
-
-                    b.Property<int>("TotalUsersCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("ID");
 
                     b.ToTable("Statistics");
                 });

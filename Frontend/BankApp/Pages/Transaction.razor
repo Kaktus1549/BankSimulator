@@ -1,0 +1,95 @@
+@page "/pay"
+
+<div class="d-flex justify-content-center align-items-center" style="height: 100%; width: 100%;">
+    <div class="col-lg-7 mb-5">
+        <div class="card shadow-lg border-0 rounded-lg mt-5">
+            <div class="card-header"><h3 class="text-center font-weight-light my-4">Payment Form</h3></div>
+            <div class="card-body">
+                <form>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <select class="form-select" id="inputSource" aria-label="Select user type">
+                                    <option disabled>Choose source account type</option>
+                                    <option value="Free" selected>Free account</option>
+                                    <option value="Saving">Saving account</option>
+                                    <option value="Credit">Credit account</option>
+                                </select>
+                            <label for="inputSource">Source</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input class="form-control" id="inputAmount" type="text" placeholder="Enter your last name" />
+                                <label for="inputAmoun">Amount</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="inputDest" type="text" placeholder="123456789/001" />
+                        <label for="inputDest">Destination account</label>
+                    </div>
+                    <div class="mt-4 mb-0">
+                        <div class="d-flex justify-content-center">
+                            <a class="btn btn-primary w-50 me-2" style="transition: 0.4s ease-in-out 0s;" onmouseover="this.style.transform='scale(1.03)'; this.style.backgroundColor='#0d6efd';" onmouseout="this.style.transform='scale(1)'; this.style.backgroundColor='#0d6efd';" onclick="Pay()">Pay</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function Pay() {
+        // Get data from the form
+        var source = document.getElementById("inputSource").value;
+        var amount = document.getElementById("inputAmount").value;
+        var dest = document.getElementById("inputDest").value;
+
+        // Get account numbers from local storage
+        if (source == "Free") {
+            var sourceAccount = localStorage.getItem("FreeAccountNumber");
+        } else if (source == "Saving") {
+            var sourceAccount = localStorage.getItem("SavingAccountNumber");
+        } else if (source == "Credit") {
+            var sourceAccount = localStorage.getItem("CreditAccountNumber");
+        }
+
+        // Call the API to process the payment
+        fetch('/api/transfer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                FromAccountNumber: sourceAccount,
+                Amount: amount,
+                ToAccountNumber: dest
+            })
+        })
+        .then(response => {
+            if (response.status === 200) {
+                alert("Payment successful!");
+            } else {
+                response.json().then(data => {
+                    let errors = data.errors;
+                    let errorMessages = '';
+
+                    // Loop through errors
+                    for (const key in errors) {
+                        errorMessages += `${errors[key]}\n`;
+                    }
+
+                    // Show error messages
+                    alert(errorMessages);
+                });
+            }
+        })
+        .catch(error => {
+            alert("Failed to process the payment. Please try again later.");
+            console.error("Error:", error);
+        });
+    }
+
+</script>

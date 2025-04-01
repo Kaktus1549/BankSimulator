@@ -15,6 +15,17 @@ public class DBLog{
     public bool Success { get; set; }
 }
 
+public class AllLogs{
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? email { get; set; }
+    public string? SrcAcc { get; set; }
+    public string? DestAcc { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime Time { get; set; }
+    public bool Success { get; set; }
+}
+
 public class DiscordSink : ILogEventSink
 {
     private readonly string _webhookUrl;

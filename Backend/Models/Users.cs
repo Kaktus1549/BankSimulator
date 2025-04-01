@@ -37,6 +37,42 @@ public class User{
         _SavingAccount = SavingAccount;
         _CreditAccount = CreditAccount;
     }
+
+    public List<string> GetAccountNumbers(){
+        List<string> AccountNumbers = new List<string>();
+        if(_Account != null){
+            AccountNumbers.Add(_Account.AccountNumber);
+        }
+        if(_SavingAccount != null){
+            AccountNumbers.Add(_SavingAccount.AccountNumber);
+        }
+        if(_CreditAccount != null){
+            AccountNumbers.Add(_CreditAccount.AccountNumber);
+        }
+        return AccountNumbers;
+    }
+
+    public List<double> GetAccountBalances(){
+        List<double> AccountBalances = new List<double>();
+        if(_Account != null){
+            AccountBalances.Add(_Account.Balance);
+        }
+        if(_SavingAccount != null){
+            AccountBalances.Add(_SavingAccount.Balance);
+        }
+        if(_CreditAccount != null){
+            AccountBalances.Add(_CreditAccount.Balance);
+        }
+        return AccountBalances;
+    }
+
+    public string GetEmail(){
+        return _Email;
+    }
+
+    public string GetName(){
+        return _FirstName + " " + _LastName;
+    }
 }
 
 public class Banker : User{

@@ -1,0 +1,192 @@
+@page "/register"
+@layout RegLogLayout
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<div id="layoutAuthentication">
+    <div id="layoutAuthentication_content">
+        <main>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-7">
+                        <div class="card shadow-lg border-0 rounded-lg mt-5">
+                            <div class="card-header"><h3 class="text-center font-weight-light my-4">Create Account</h3></div>
+                            <div class="card-body">
+                                <form>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating mb-3 mb-md-0">
+                                                <input class="form-control" id="inputFirstName" type="text" placeholder="Enter your first name" />
+                                                <label for="inputFirstName">First name</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input class="form-control" id="inputLastName" type="text" placeholder="Enter your last name" />
+                                                <label for="inputLastName">Last name</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input class="form-control" id="inputEmail" type="email" placeholder="name@example.com" />
+                                        <label for="inputEmail">Email address</label>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating mb-3 mb-md-0">
+                                                <input class="form-control" id="inputPassword" type="password" placeholder="Create a password" />
+                                                <label for="inputPassword">Password</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating mb-3 mb-md-0">
+                                                <input class="form-control" id="inputPasswordConfirm" type="password" placeholder="Confirm password" />
+                                                <label for="inputPasswordConfirm">Confirm Password</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-floating mb-3 mt-3">
+                                            <select class="form-select" id="inputUserType" aria-label="Select user type">
+                                                <option disabled>Choose user type</option>
+                                                <option value="User" selected>User</option>
+                                                @if (role == "Admin")
+                                                {
+                                                    <option value="Banker">Banker</option>
+                                                    <option value="Admin">Admin</option>
+                                                }
+                                            </select>
+                                            <label for="inputUserType" style="margin-left: 12.5px;">User Type</label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 mb-0">
+                                        <div class="d-flex justify-content-center">
+                                            <a class="btn btn-success w-50 me-2" style="transition: 0.4s ease-in-out 0s;" onmouseover="this.style.backgroundColor='#2d6a4f'; this.style.transform='scale(1.03)';" onmouseout="this.style.backgroundColor='#198754'; this.style.transform='scale(1)';" onclick="Reg()">Register</a>
+                                            <a class="btn btn-danger w-50" href="/" style="transition: 0.4s ease-in-out 0s;" onmouseover="this.style.backgroundColor='#b02a37'; this.style.transform='scale(1.03)';" onmouseout="this.style.backgroundColor='#dc3545'; this.style.transform='scale(1)';">Cancel</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="js/emailregex.js"></script>
+<script>
+    function NullCheck(firstName, lastName, email, password, passwordConfirm) {
+        // Check if any of the input fields are empty
+        if (firstName === '' || lastName === '' || email === '' || password === '' || passwordConfirm === '') {
+            alert('Please fill in all fields');
+            return false;
+        }
+        return true;
+    }
+
+    function Reg(){
+        // Send data to /api/register endpoint
+
+        // Get data from input fields
+        const inputFirstName = document.getElementById('inputFirstName');
+        const inputLastName = document.getElementById('inputLastName');
+        const inputEmail = document.getElementById('inputEmail');
+        const inputPassword = document.getElementById('inputPassword');
+        const inputPasswordConfirm = document.getElementById('inputPasswordConfirm');
+        const inputUserType = document.getElementById('inputUserType');
+
+        // Check if any of the input fields are empty
+        if (!NullCheck(inputFirstName.value, inputLastName.value, inputEmail.value, inputPassword.value, inputPasswordConfirm.value)) {
+            return;
+        }
+        // Check if email is valid
+        if (!EmailCheck(inputEmail.value)) {
+            alert('Invalid email format');
+            return;
+        }
+
+        let roleId = inputUserType.value === 'User' ? 1 : inputUserType.value === 'Banker' ? 2 : 3;
+
+        // Check if password and confirm password match
+        if (inputPassword.value !== inputPasswordConfirm.value) {
+            alert('Passwords do not match');
+        }
+
+        // Create a new user object
+        const newUser = {
+            firstName: inputFirstName.value,
+            lastName: inputLastName.value,
+            email: inputEmail.value,
+            password: inputPassword.value,
+            role: roleId
+        };
+
+        // Send data to /api/register endpoint
+        fetch('/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newUser)
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Check response code
+                if (data.code === 200) {
+                    alert('User registered successfully');
+                    window.location.href = '/';
+                } else {
+                    // Example response
+                    // {
+                    //     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    //     "title": "One or more validation errors occurred.",
+                    //     "status": 400,
+                    //     "errors": {
+                    //         "Email": [
+                    //             "Email is required"
+                    //         ]
+                    //     },
+                    //     "traceId": "00-8b821b07be43c31645523da4400924ee-fc7aa8e5b69f365e-00"
+                    // }
+
+                    // Get error messages
+                    let errors = data.errors;
+                    let errorMessages = '';
+
+                    // Loop through errors
+                    for (const key in errors) {
+                        errorMessages += `${errors[key][0]}\n`;
+                    }
+
+                    // Show error messages
+                    alert(errorMessages);
+                }
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+</script>
+
+@code{
+    private string? role;
+    
+
+    private async Task FetchRole()
+    {
+        role = await JS.InvokeAsync<string>("FetchLSKey", "role");
+    }
+
+    // On page load
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchRole();
+
+        // If role is user, redirect to home page
+        if (role == "User")
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

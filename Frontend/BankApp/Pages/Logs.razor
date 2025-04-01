@@ -1,0 +1,116 @@
+﻿@page "/logs"
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+@if (role == "User"){
+    <Unauthorized />
+}
+else{
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            DataTable Example
+        </div>
+        <div class="card-body">
+            <table id="datatablesSimple">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Amount</th>
+                        <th>Time</th>
+                        <th>Was successful?</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Amount</th>
+                        <th>Time</th>
+                        <th>Was successful?</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="js/scripts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+    <script src="js/datatables-simple-demo.js"></script>
+    <script>
+        async function FetchLogs() {
+            let email = localStorage.getItem("email");
+            const response = await fetch("/api/getall", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            let data;
+            if (response.headers.get('Content-Type')?.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                    if (data.includes("Only admin")) {
+                        return;
+                    }
+                }
+
+            // Example of data
+            // "result": [
+            // {
+            //     "firstName": "Karel",
+            //     "lastName": "Novák",
+            //     "email": "karel.novak@svecovinabanka.cz",
+            //     "srcAcc": "123456789/001",
+            //     "destAcc": "987654321/003",
+            //     "amount": 500.00000000000000000000000000,
+            //     "time": "2025-03-27T10:16:07.757058",
+            //     "success": true
+            // }
+
+            let res = data.result;
+            let table = document.querySelector("table tbody");
+            res.forEach(element => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${element.firstName} ${element.lastName}</td>
+                    <td>${element.email}</td>
+                    <td>${element.srcAcc}</td>
+                    <td>${element.destAcc}</td>
+                    <td>${element.amount}</td>
+                    <td>${new Date(element.time).toLocaleString()}</td>
+                    <td>${element.success == true ? "Yes" : "No"}</td>
+                `;
+                table.appendChild(tr);
+            });
+
+            // Initialize the table
+            new simpleDatatables.DataTable("#datatablesSimple");
+        }
+    </script>
+}
+@code{
+    private string? role;
+
+    private async Task FetchData()
+    {
+        role = await JS.InvokeAsync<string>("FetchLSKey", "role");
+        await JS.InvokeVoidAsync("FetchLogs");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Wait 1ms, since because of some skill issue it throws an error that "FetchHistory" is not defined
+        await Task.Delay(1);
+        await FetchData();
+        StateHasChanged();
+    }
+}

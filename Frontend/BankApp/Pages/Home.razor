@@ -1,0 +1,185 @@
+﻿@page "/"
+@inject IJSRuntime JS
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">Welcome, @name</li>
+    </ol>
+
+    @if (name == "Loading..."){
+        <div class="alert alert-danger" role="alert">
+            Loading data, please wait...
+        </div>
+    }
+
+    @if (role == "User" && name != "Loading..."){
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                    <div class="card-body">
+                        Free account
+                        <div class="mt-4"> ⦁ @FreeAccountBalance$</div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a class="small text-white stretched-link" style="text-decoration: none">@FreeAccountNumber</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                    <div class="card-body">
+                        Saving account:
+                        <div class="mt-4"> ⦁ @SavingAccountBalance$</div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a class="small text-white stretched-link" style="text-decoration: none">@SavingAccountNumber</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-danger text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                    <div class="card-body">
+                        Credit account:
+                        <div class="mt-4"> ⦁ @CreditAccountBalance$</div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a class="small text-white stretched-link" style="text-decoration: none">@CreditAccountNumber</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-area me-1"></i>
+                        Free Account Balance
+                    </div>
+                    <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        Savings Account Balance
+                    </div>
+                    <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
+                </div>
+            </div>
+        </div>
+    }
+    @if (role == "Admin" || role == "Banker" && name != "Loading..."){
+        // Admin or Banker view
+        // It will just print the name, email and role of the user
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">User Information</h4>
+            <p><strong>Name:</strong> @name</p>
+            <p><strong>Email:</strong> @email</p>
+            <p><strong>Role:</strong> @role</p>
+            <hr>
+            <p class="mb-0">This is a simple user information display for Admin or Banker roles.</p>
+        </div>
+        @if(role == "Admin"){
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    User distribution
+                </div>
+                <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                <div class="card-footer small text-muted">Last updated @lastUpdated</div>
+            </div>
+        }
+        @if(role == "Banker"){
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-area me-1"></i>
+                            Total debt in time
+                        </div>
+                        <div class="card-body"><canvas id="myAreaChart" width="100%" height="30"></canvas></div>
+                        <div class="card-footer small text-muted">Updated @lastUpdated</div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-pie me-1"></i>
+                            Account distribution
+                        </div>
+                        <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                        <div class="card-footer small text-muted">Updated @lastUpdated</div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="assets/demo/ChartArea.js"></script>
+<script src="assets/demo/ChartBar.js"></script>
+<script src="js/datatables-simple-demo.js"></script>
+<script src="assets/demo/ChartPie.js"></script>
+
+
+@code{
+    private string FreeAccountNumber = "Loading...";
+    private string SavingAccountNumber = "Loading...";
+    private string CreditAccountNumber = "Loading...";
+    private string email = "Loading...";
+
+    private int FreeAccountBalance = 0;
+    private int SavingAccountBalance = 0;
+    private int CreditAccountBalance = 0;
+
+    private string name = "Loading...";
+    private string role = "User";
+
+    private string lastUpdated = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+
+    private async Task UpdateData(){
+        await JS.InvokeVoidAsync("GetAccountsData", "true");
+    }
+
+    private async Task FetchData()
+    {
+        List<string> list = await JS.InvokeAsync<List<string>>("GetAccountsData");
+        string firstName = await JS.InvokeAsync<string>("FetchLSKey", "firstName");
+        string mail = await JS.InvokeAsync<string>("FetchLSKey", "email");
+        string lastName = await JS.InvokeAsync<string>("FetchLSKey", "lastName");
+        string fetchRole = await JS.InvokeAsync<string>("FetchLSKey", "role");
+
+        role = fetchRole;
+        name = $"{firstName} {lastName}";
+        FreeAccountNumber = list[0];
+        SavingAccountNumber = list[1];
+        CreditAccountNumber = list[2];
+
+        email = mail;
+
+        FreeAccountBalance = int.Parse(list[3]);
+        SavingAccountBalance = int.Parse(list[4]);
+        CreditAccountBalance = int.Parse(list[5]);
+    }
+
+    // On page load
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateData();
+        await FetchData();
+        // Wait for the JS to load
+        if (role == "User"){
+            JS.InvokeVoidAsync("ChartArea");
+            JS.InvokeVoidAsync("ChartBar");
+        }
+        if (role == "Banker"){
+            JS.InvokeVoidAsync("BankerPieFetch");
+            JS.InvokeVoidAsync("BankerChart");
+        }
+        if (role == "Admin"){
+            JS.InvokeVoidAsync("PieFetch");
+        }
+    }
+}

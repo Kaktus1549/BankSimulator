@@ -1,0 +1,62 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+
+<div class="sb-sidenav-menu">
+    <div class="nav">
+        <div class="sb-sidenav-menu-heading">Home</div>
+        <a class="nav-link" href="/">
+            <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
+            Dashboard
+        </a>
+        @if (role == "User"){
+            <div class="sb-sidenav-menu-heading">Transactions</div>
+            <a class="nav-link" href="/pay">
+                <div class="sb-nav-link-icon"><i class="fas fa-money-bill-wave"></i></div>
+                New Transaction
+            </a>
+            <a class="nav-link" href="/history">
+                <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
+                History
+            </a>
+        }
+        @if (role == "Banker" || role == "Admin"){
+        <div class="sb-sidenav-menu-heading">Banker menu</div>
+        <a class="nav-link" href="/register">
+            <div class="sb-nav-link-icon"><i class="fas fa-user-plus"></i></div>
+            Add User
+        </a>
+        <a class="nav-link" href="/logs">
+            <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
+            History of Transactions
+        </a>
+        <a class="nav-link" href="/view">
+            <div class="sb-nav-link-icon"><i class="fas fa-user-friends"></i></div>
+            View user
+        </a>
+        }
+        @if (role == "Admin"){
+        <div class="sb-sidenav-menu-heading">Admin menu</div>
+        <a class="nav-link" href="/chmod">
+            <div class="sb-nav-link-icon"><i class="fas fa-user-shield"></i></div>
+            Change role
+        </a>
+        }
+    </div>
+</div>
+
+@code{
+    private string? role;
+    
+
+    private async Task FetchRole()
+    {
+        role = await JS.InvokeAsync<string>("FetchLSKey", "role");
+    }
+
+    // On page load
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchRole();
+    }
+}

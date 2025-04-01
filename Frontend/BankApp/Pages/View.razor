@@ -1,0 +1,205 @@
+@page "/view"
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+@if(role == "User"){
+    <Unauthorized />
+}else{
+    @if(loaded == false){
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; width: 100%;">
+            <div class="col-lg-7 mb-5">
+                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                    <div class="card-header"><h3 class="text-center font-weight-light my-4">Search user</h3></div>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="inputSearchTerm" type="text" placeholder="user@banka.com" />
+                                <label for="inputSearchTerm">User email or account number</label>
+                            </div>
+                            <div class="mt-4 mb-0">
+                                <div class="d-flex justify-content-center">
+                                    <button type="button" class="btn btn-primary w-50 me-2"
+                                    @onclick="FetchUserData"
+                                    @onclick:preventDefault
+                                    style="transition: 0.4s ease-in-out 0s;"
+                                    onmouseover="this.style.transform='scale(1.03)'; this.style.backgroundColor='#0d6efd';"
+                                    onmouseout="this.style.transform='scale(1)'; this.style.backgroundColor='#0d6efd';">
+                                        Search
+                                    </button>                        
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    } else{
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">User view</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item active">Currently viewing: @name (@email)</li>
+            </ol>
+            <div class="row">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                        <div class="card-body">
+                            Free account
+                            <div class="mt-4"> ⦁ @FreeAccountBalance$</div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <a class="small text-white stretched-link" style="text-decoration: none">@FreeAccountNumber</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                        <div class="card-body">
+                            Saving account:
+                            <div class="mt-4"> ⦁ @SavingAccountBalance$</div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <a class="small text-white stretched-link" style="text-decoration: none">@SavingAccountNumber</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4" onmouseover="this.style.transform='translateY(-10px)';" onmouseout="this.style.transform='translateY(0px)';" style="cursor: pointer;">
+                        <div class="card-body">
+                            Credit account:
+                            <div class="mt-4"> ⦁ @CreditAccountBalance$</div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <a class="small text-white stretched-link" style="text-decoration: none">@CreditAccountNumber</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-xl-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-area me-1"></i>
+                            Free Account Balance
+                        </div>
+                        <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-xl-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            Savings Account Balance
+                        </div>
+                        <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <script src="assets/demo/ChartArea.js"></script>
+    <script src="assets/demo/ChartBar.js"></script>
+    <script>
+        async function ViewUser(){
+            var searchTerm = document.getElementById("inputSearchTerm").value;
+
+            try {
+                var response = await fetch('/api/view', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ searchTerm: searchTerm })
+                });
+
+                var data = await response.json();
+
+                if (data) {
+                    if (data.errors){
+                        let errors = data.errors;
+                        let errorMessages = '';
+                        for (const key in errors) {
+                            errorMessages += `${errors[key]}\n`;
+                        }
+                        alert(errorMessages);
+                        return null;
+                    }
+                    // Return an object with property names matching your C# model
+                    return {
+                        Name: data.name,
+                        Email: data.email,
+                        Accounts: data.accounts[0],
+                        Balances: data.accounts[1]
+                    };
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("An error occurred while fetching user data.");
+                return null;
+            }
+        }
+
+    </script>
+}
+@code{
+    private bool loaded = false;
+    private string FreeAccountNumber = "Loading...";
+    private int FreeAccountBalance = 0;
+    private string SavingAccountNumber = "Loading...";
+    private int SavingAccountBalance = 0;
+    private string CreditAccountNumber = "Loading...";
+    private int CreditAccountBalance = 0;
+
+    private string? email;
+    private string? name = "Loading...";
+    private string? role;
+
+    public class UserData {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public List<string> Accounts { get; set; }
+        public List<string> Balances { get; set; }
+    }
+
+
+    // Function to fetch user data
+    private async Task FetchUserData(){
+        var userData = await JS.InvokeAsync<UserData>("ViewUser");
+        if(userData != null)
+        {
+            name = userData.Name;
+            email = userData.Email;
+            
+            if (userData.Accounts != null && userData.Accounts.Count >= 3)
+            {
+                FreeAccountNumber = userData.Accounts[0];
+                SavingAccountNumber = userData.Accounts[1];
+                CreditAccountNumber = userData.Accounts[2];
+            }
+
+            if (userData.Balances != null && userData.Balances.Count >= 3)
+            {
+                FreeAccountBalance = int.Parse(userData.Balances[0].Split(',')[0]);
+                SavingAccountBalance = int.Parse(userData.Balances[1].Split(',')[0]);
+                CreditAccountBalance = int.Parse(userData.Balances[2].Split(',')[0]);
+            }
+
+            loaded = true;
+
+            await JS.InvokeVoidAsync("ChartArea", email);
+            await JS.InvokeVoidAsync("ChartBar", email);
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task FetchRole()
+    {
+        role = await JS.InvokeAsync<string>("FetchLSKey", "role");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchRole();
+        StateHasChanged();
+    }
+}

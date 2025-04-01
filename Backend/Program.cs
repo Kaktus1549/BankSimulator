@@ -2,7 +2,7 @@ using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using DotNetEnv;
 using System.Security.Cryptography;
-using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace BankBackend{
@@ -76,36 +76,42 @@ namespace BankBackend{
             };
 
             Log.Information("Trying to connect to the database...");
-            var bankaDB = new BankaDB(
-                config["serverAddress"],
-                config["databaseName"],
-                config["username"],
-                config["password"],
-                Log.Logger,
-                maxDebt: decimal.TryParse(config["maxDebt"], NumberStyles.Number, CultureInfo.InvariantCulture, out var md) ? md : 10000m,
-                maxStudentWithdrawal: decimal.TryParse(config["maxStudentWithdrawal"], NumberStyles.Number, CultureInfo.InvariantCulture, out var msw) ? msw : 2000m,
-                maxStudentDailyWithdrawal: decimal.TryParse(config["maxStudentDailyWithdrawal"], NumberStyles.Number, CultureInfo.InvariantCulture, out var msdw) ? msdw : 4000m,
-                interestRate: float.TryParse(config["interestRate"], NumberStyles.Float, CultureInfo.InvariantCulture, out var ir) ? ir : 0.05f,
-                port: int.TryParse(config["serverPort"], out var port) ? port : 3306,
-                masterName: config["masterName"],
-                masterLastName: config["masterLastName"],
-                masterEmail: config["masterEmail"],
-                masterPassword: config["masterPassword"]
-            );
-            bankaDB.EnsureMaster();
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog();
             builder.Services.AddHostedService<DailyTaskService>();
 
-            builder.Services.AddSingleton(bankaDB);
+            builder.Services.AddDbContext<BankaDB>(options =>
+            {
+                // Retrieve values from the environment or configuration
+                var serverAddress = Env.GetString("DB_SERVER_ADDRESS");
+                var serverPort = Env.GetString("DB_SERVER_PORT");
+                var databaseName = Env.GetString("DB_NAME");
+                var username = Env.GetString("DB_USERNAME");
+                var password = Env.GetString("DB_PASSWORD");
+
+                // Build the connection string
+                var connectionString = $"Server={serverAddress};Port={serverPort};Database={databaseName};User Id={username};Password={password};";
+
+                // Use the MySQL provider with auto-detection of the server version
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            });
+
             builder.Services.AddSingleton(config);
             builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddCors(options => {
+                options.AddPolicy("AllowBlazorClient",
+                    policy => policy
+                        .WithOrigins("http://localhost:5001","http://localhost:5002", "http://banka.kaktusgame.eu") // Replace with your client URL
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+            });
 
             var app = builder.Build();
+            app.UseCors("AllowBlazorClient");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+<div class="sb-sidenav-footer">
+    <div class="small">Logged in as:</div>
+    @mail
+</div>
+
+@code {
+    private string mail = "Loading...";
+
+    private async Task FetchMail()
+    {
+        mail = await JS.InvokeAsync<string>("FetchLSKey", "email");
+    }
+
+    // On page load
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchMail();
+    }
+}
