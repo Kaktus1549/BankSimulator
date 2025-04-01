@@ -24,13 +24,25 @@ public class DailyTaskService : BackgroundService
             {
                 _logger.LogInformation("Executing daily tasks...");
 
-                // Create a new scope to obtain a BankaDB instance (which is scoped)
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var db = scope.ServiceProvider.GetRequiredService<BankaDB>();
+                int counter = 0;
+                while(counter < 5){
+                    try{
+                        // Create a new scope to obtain a BankaDB instance (which is scoped)
+                        using (var scope = _serviceProvider.CreateScope())
+                        {
+                            var db = scope.ServiceProvider.GetRequiredService<BankaDB>();
 
-                    await MonthlyTasks(db);
-                    await DailyTasks(db);
+                            await MonthlyTasks(db);
+                            await DailyTasks(db);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error while executing daily tasks");
+                        _logger.LogError("Retrying in 5 seconds...");
+                        await Task.Delay(5000, stoppingToken); // Wait for 5 seconds before retrying
+                    }
+                    counter++;
                 }
             }
             catch (Exception ex)

@@ -116,16 +116,21 @@ namespace BankBackend{
             // Apply any pending migrations on startup (creates DB/tables if not present)
             using (var scope = app.Services.CreateScope())
             {
-                try
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<BankaDB>();
-                    dbContext.Database.Migrate();
-                    Log.Information("Database migration completed successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "An error occurred while migrating the database.");
-                    // Optionally, rethrow or handle the error as needed.
+                int counter = 0;
+                while(counter < 5){
+                    try
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<BankaDB>();
+                        dbContext.Database.Migrate();
+                        Log.Information("Database migration completed successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "An error occurred while migrating the database.");
+                        Log.Error("Retrying in 5 seconds...");
+                        Thread.Sleep(5000); // Wait for 5 seconds before retrying
+                    }
+                    counter++;
                 }
             }
 
