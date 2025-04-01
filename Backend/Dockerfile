@@ -23,4 +23,4 @@ COPY --from=build /app/out .
 EXPOSE 5001
 
 # Start the application
-ENTRYPOINT ["dotnet", "Server.dll"]
+ENTRYPOINT ["dotnet", "Backend.dll"]

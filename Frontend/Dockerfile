@@ -21,4 +21,4 @@ COPY --from=build /app/out .
 EXPOSE 5002
 
 # Start the application. Adjust "Banka.Frontend.dll" to match your project's output DLL.
-ENTRYPOINT ["dotnet", "Banka.Frontend.dll"]
+ENTRYPOINT ["dotnet", "Frontend.dll"]
