@@ -1,0 +1,19 @@
+@page "/logout"
+
+<div class="container-fluid px-4 mt-5">
+    <div class="alert alert-danger" role="alert">
+        Logging out, please wait...
+    </div>
+</div>
+
+<script>
+    async function LogOut() {
+        localStorage.clear();
+        await fetch("/api/logout", {
+            method: "GET",
+        });
+        window.location.href = "/login";
+    };
+
+    LogOut();
+</script>

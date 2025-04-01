@@ -1,0 +1,2 @@
+GRANT ALL PRIVILEGES ON Banka.* TO 'kaktus'@'%';
+FLUSH PRIVILEGES;

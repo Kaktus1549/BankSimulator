@@ -1,44 +1,147 @@
-var builder = WebApplication.CreateBuilder(args);
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
+using DotNetEnv;
+using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+namespace BankBackend{
+    public class Program{
 
-var app = builder.Build();
+        public static string Generate256BitKey()
+        {
+            // Generate 32 bytes (256 bits) of random data
+            byte[] key = new byte[32];
+            RandomNumberGenerator.Fill(key);
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+            string secret = Convert.ToBase64String(key);
 
-app.UseHttpsRedirection();
+            // Save the generated key to the .env file
+            File.AppendAllText(".env", $"\nJWT_SECRET=\"{secret}\"");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+            return secret;
+        }
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+        public static void Main(string[] args){
+            Env.Load();
+            var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level,-14}] {Message:lj}{NewLine}{Exception}";
 
-app.Run();
+            bool enableDiscordSink = Env.GetBool("ENABLE_DISCORD_SINK", false);
+            string discordWebhookUrl = Env.GetString("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/1353294040455577661/yro5I25TZFsSth9GzPxYvDsTFEd84vos9jGp6aGf1E70C12JaHGP_hHxuqCrOAsU9NSF");
+            string discordUsername = Env.GetString("DISCORD_USERNAME", "KaktusBank");
+            string discordAvatar = Env.GetString("DISCORD_AVATAR", "https://example.com/avatar.png");
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console(
+                    outputTemplate: outputTemplate,
+                    theme: new AnsiConsoleTheme(new Dictionary<ConsoleThemeStyle, string>
+                    {
+                        [ConsoleThemeStyle.Text] = "\x1b[90m",                 
+                        [ConsoleThemeStyle.LevelDebug] = "\x1b[34m",           
+                        [ConsoleThemeStyle.LevelInformation] = "\x1b[34m",     
+                        [ConsoleThemeStyle.LevelWarning] = "\x1b[33m",         
+                        [ConsoleThemeStyle.LevelError] = "\x1b[31m",           
+                        [ConsoleThemeStyle.LevelFatal] = "\x1b[31m",           
+                        [ConsoleThemeStyle.SecondaryText] = "\x1b[32m",        
+                    })
+                )
+                .WriteTo.File(
+                    "logs/log-.txt",
+                    outputTemplate: outputTemplate,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7
+                )
+                .WriteTo.Sink(new DiscordSink(
+                    enabled: enableDiscordSink,
+                    webhookUrl: discordWebhookUrl,
+                    username: discordUsername,
+                    avatar: discordAvatar
+                ))
+                .CreateLogger();
+
+            Dictionary<string, string> config = new Dictionary<string, string>
+            {
+                {"serverAddress", Env.GetString("DB_SERVER_ADDRESS")},
+                {"serverPort", Env.GetString("DB_SERVER_PORT")},
+                {"databaseName", Env.GetString("DB_NAME")},
+                {"username", Env.GetString("DB_USERNAME")},
+                {"password", Env.GetString("DB_PASSWORD")},
+                // If JWT_SECRET is not set OR is empty, generate a new one and save it to the .env file
+                {"jwtSecret", Env.GetString("JWT_SECRET") == "" ? Generate256BitKey() : Env.GetString("JWT_SECRET")},
+                {"issuer", Env.GetString("JWT_ISSUER")},
+                {"maxDebt", Env.GetString("MAX_DEBT")},
+                {"maxStudentWithdrawal", Env.GetString("MAX_STUDENT_WITHDRAWAL")},
+                {"maxStudentDailyWithdrawal", Env.GetString("MAX_STUDENT_DAILY_WITHDRAWAL")},
+                {"interestRate", Env.GetString("INTEREST_RATE")},
+                {"masterName", Env.GetString("MASTER_NAME")},
+                {"masterLastName", Env.GetString("MASTER_LAST_NAME")},
+                {"masterEmail", Env.GetString("MASTER_EMAIL")},
+                {"masterPassword", Env.GetString("MASTER_PASSWORD")}
+            };
+
+            Log.Information("Trying to connect to the database...");
+            var builder = WebApplication.CreateBuilder(args);
+            builder.Host.UseSerilog();
+            builder.Services.AddHostedService<DailyTaskService>();
+
+            builder.Services.AddDbContext<BankaDB>(options =>
+            {
+                var serverAddress = Env.GetString("DB_SERVER_ADDRESS");
+                var serverPort = Env.GetString("DB_SERVER_PORT");
+                var databaseName = Env.GetString("DB_NAME");
+                var username = Env.GetString("DB_USERNAME");
+                var password = Env.GetString("DB_PASSWORD");
+
+                var connectionString = $"Server={serverAddress};Port={serverPort};Database={databaseName};User Id={username};Password={password};";
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            });
+
+            builder.Services.AddSingleton(config);
+            builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddCors(options => {
+                options.AddPolicy("AllowBlazorClient",
+                    policy => policy
+                        .WithOrigins("http://localhost:5001", "http://localhost:5002", "http://banka.kaktusgame.eu")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+            });
+
+            var app = builder.Build();
+            app.UseCors("AllowBlazorClient");
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            app.UseAuthorization();
+            app.MapControllers();
+
+            // Apply any pending migrations on startup (creates DB/tables if not present)
+            using (var scope = app.Services.CreateScope())
+            {
+                int counter = 0;
+                while(counter < 5){
+                    try
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<BankaDB>();
+                        dbContext.Database.Migrate();
+                        Log.Information("Database migration completed successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "An error occurred while migrating the database.");
+                        Log.Error("Retrying in 5 seconds...");
+                        Thread.Sleep(5000); // Wait for 5 seconds before retrying
+                    }
+                    counter++;
+                }
+            }
+
+            app.Run();
+        }
+    }
 }

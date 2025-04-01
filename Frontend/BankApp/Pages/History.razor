@@ -1,0 +1,134 @@
+@page "/history"
+@inject IJSRuntime JS
+
+@if (isLoading)
+{
+    <div class="alert alert-danger" role="alert">
+        Loading data, please wait...
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Payments History
+        </div>
+        <div class="card-body">
+            <table id="datatablesSimple">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Ammount</th>
+                        <th>Time</th>
+                        <th>Was successful</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Ammount</th>
+                        <th>Time</th>
+                        <th>Was successful</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="js/scripts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+<script src="js/datatables-simple-demo.js"></script>
+<script>
+    async function FetchHistory() {
+        let email = localStorage.getItem("email");
+        const response = await fetch("/api/transactionsByUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "email": email
+            }),
+        });
+        const data = await response.json();
+
+        // Format
+        // <tr>
+        //     <td>Credit Account</td>
+        //     <td>49249247294/003</td>
+        //     <td>500</td>
+        //     <td>2025-03-27T10:16:07.757058+01:00</td>
+        //     <td>Yes</td>
+        // </tr>
+
+        // Example of data
+        // {
+        // "result": [
+        //     {
+        //         "logID": 1,
+        //         "userID": 4,
+        //         "srcAccID": 123456789,
+        //         "destAccID": 987654321,
+        //         "srcAccType": 0,
+        //         "destAccType": 2, -> 0 - Free, 1 - Savings, 2 - Credit
+        //         "amount": 500,
+        //         "time": "2025-03-27T10:16:07.757058+01:00",
+        //         "success": true
+        //     }
+
+        let res = data.result;
+        let table = document.querySelector("table tbody");
+        res.forEach(element => {
+            let tr = document.createElement("tr");
+            let td1 = document.createElement("td");
+            let td2 = document.createElement("td");
+            let td3 = document.createElement("td");
+            let td4 = document.createElement("td");
+            let td5 = document.createElement("td");
+
+            td1.innerText = element.srcAccType == 0 ? "Free Account" : element.srcAccType == 1 ? "Savings Account" : "Credit Account";
+            td2.innerText = element.destAccID + "/" + (element.destAccType == 0 ? "001" : element.destAccType == 1 ? "002" : "003");
+            td3.innerText = element.amount;
+            // Convert time to human readable
+            td4.innerText = new Date(element.time).toLocaleString();
+            td5.innerText = element.success ? "Yes" : "No";
+
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            tr.appendChild(td4);
+            tr.appendChild(td5);
+
+            table.appendChild(tr);
+        });
+
+        // Initialize the table
+        new simpleDatatables.DataTable("#datatablesSimple");
+    }
+</script>
+
+
+@code{
+
+    private bool isLoading = true;
+
+    private async Task FetchData()
+    {
+        await JS.InvokeVoidAsync("FetchHistory");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Wait 1ms, since because of some skill issue it throws an error that "FetchHistory" is not defined
+        await Task.Delay(1);
+        await FetchData();
+        isLoading = false;
+        StateHasChanged();
+    }
+}
