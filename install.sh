@@ -68,7 +68,7 @@ DOCKER_WEB_PORT=$DOCKER_WEB_PORT
 DOCKER_FRONTEND_PORT=$DOCKER_FRONTEND_PORT
 EOF
 
-cat <<EOF > ./Docker/Backend/.env
+cat <<EOF > ./Backend/.env
 # Backend configuration
 JWT_SECRET=$JWT_SECRET
 JWT_ISSUER=$JWT_ISSUER
@@ -82,5 +82,5 @@ echo "Configuration files created successfully!"
 
 cd Docker
 echo "Starting Docker containers..."
-docker-compose up --build -d
+docker compose up --build -d
 echo "Docker containers started successfully!"
