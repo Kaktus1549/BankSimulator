@@ -11,6 +11,7 @@ services:
       MYSQL_DATABASE: Banka 
     volumes:
       - banka-volume:/var/lib/mysql
+      - ../MySQL/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
   
   banka-backend:
     restart: always
