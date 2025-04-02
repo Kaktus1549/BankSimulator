@@ -499,9 +499,14 @@ public class BankaDB : DbContext
         }
         if (savingAccount != null){
             accountIDs.Add(savingAccount.AccID.ToString() + "/002");
+            accountIDs.Add(savingAccount.Student ? "Student" : "Non-student");
         }
         if (creditAccount != null){
             accountIDs.Add(creditAccount.AccID.ToString() + "/003");
+        }
+
+        if (freeAccount == null || savingAccount == null || creditAccount == null){
+            throw new Exception("User has some accounts null");
         }
         return Task.FromResult<List<string>>(accountIDs);
     }

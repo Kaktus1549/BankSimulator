@@ -6,6 +6,11 @@
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item active">Welcome, @name</li>
     </ol>
+    @if (student){
+        <div class="alert alert-info" role="alert">
+            You are a student, saving account has some limitations.
+        </div>
+    }
 
     @if (name == "Loading..."){
         <div class="alert alert-danger" role="alert">
@@ -136,6 +141,7 @@
 
     private string name = "Loading...";
     private string role = "User";
+    private bool student = false;
 
     private string lastUpdated = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -146,7 +152,8 @@
         string mail = await JS.InvokeAsync<string>("FetchLSKey", "email");
         string lastName = await JS.InvokeAsync<string>("FetchLSKey", "lastName");
         string fetchRole = await JS.InvokeAsync<string>("FetchLSKey", "role");
-
+        bool fetchStudent = await JS.InvokeAsync<string>("FetchLSKey", "IsStudent") == "Student" ? true : false;
+        student = fetchStudent;
         role = fetchRole;
         name = $"{firstName} {lastName}";
         email = mail;

@@ -90,7 +90,7 @@
                     // Check if the user is an admin or banker
                     return["undefined", "undefined", "undefined", "0", "0", "0"];
                 }
-                if (!localStorage.getItem("FreeAccountNumber") || !localStorage.getItem("SavingAccountNumber") || !localStorage.getItem("CreditAccountNumber" || forceLoad)) {
+                if (!localStorage.getItem("FreeAccountNumber") || !localStorage.getItem("SavingAccountNumber") || !localStorage.getItem("CreditAccountNumber" || forceLoad || !localStorage.getItem("IsStudent"))) {
                     const response = await fetch('/api/accounts', {
                         method: 'POST',
                         headers: {
@@ -107,7 +107,8 @@
                     // Set each value in the local storage
                     localStorage.setItem('FreeAccountNumber', data[0]);
                     localStorage.setItem('SavingAccountNumber', data[1]);
-                    localStorage.setItem('CreditAccountNumber', data[2]);
+                    localStorage.setItem('IsStudent', data[2]);
+                    localStorage.setItem('CreditAccountNumber', data[3]);
                 }
                 if (!localStorage.getItem("FreeAccountBalance") || !localStorage.getItem("SavingAccountBalance") || !localStorage.getItem("CreditAccountBalance") || forceLoad) {
                     const response = await fetch('/api/balance', {
