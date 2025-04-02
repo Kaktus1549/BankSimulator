@@ -28,6 +28,16 @@ else{
                                 <label for="inputRole">New role</label>
                                 </div>
                             </div>
+                            <div class="col-md-6" id="student">
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" id="inputStudent" aria-label="Is student">
+                                        <option disabled>Is student</option>
+                                        <option value="False" selected>False</option>
+                                        <option value="True">True</option>
+                                    </select>
+                                    <label for="inputStudent">Student</label>
+                                </div>
+                            </div>
                         </div>
                         <div class="mt-4 mb-0">
                             <div class="d-flex justify-content-center">
@@ -41,10 +51,21 @@ else{
     </div>
 
     <script>
+        // If user is not selected, hide the student select
+        const inputUserType = document.getElementById('inputRole');
+        const inputStudent = document.getElementById('student');
+        inputUserType.addEventListener('change', function() {
+            if (inputUserType.value === 'User') {
+                inputStudent.style.display = 'block';
+            } else {
+                inputStudent.style.display = 'none';
+            }
+        });
         async function Chmod() {
             // Get the email and role from the input fields
             var email = document.getElementById("inputMail").value;
             var role = document.getElementById("inputRole").value;
+            var student = document.getElementById("inputStudent").value;
 
 
             // If User - 0, Banker - 1, Admin - 2
@@ -63,7 +84,7 @@ else{
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ Email: email, Role: roleId })
+                    body: JSON.stringify({ Email: email, Role: roleId , Student: student === 'True' ? true : false})
                 });
                     let response;
                     if (data.headers.get('Content-Type')?.includes('application/json')) {

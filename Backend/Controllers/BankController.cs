@@ -186,6 +186,12 @@ public class apiController : ControllerBase
             return BadRequest("User not found.");
         }
         await _db.ChangeRole(user.UserID, model.Role, int.Parse(data["user_id"]));
+        if (model.Role == Role.User){
+            if (model.Student != null){
+                await _db.ChangeStudentStatus(user.Email, model.Student.Value);
+                _logger.Information($"User {model.Email} student status changed to {model.Student} by {data["email"]} ({data["role"]}) from {Request.HttpContext.Connection.RemoteIpAddress}.");
+            }
+        }
         _logger.Information($"Role of {model.Email} changed to {model.Role} by {data["email"]} ({data["role"]}) from {Request.HttpContext.Connection.RemoteIpAddress}.");
         return Ok("Role changed successfully.");
     }

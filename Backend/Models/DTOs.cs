@@ -29,6 +29,7 @@ public class ChangeRoleDTO{
     public required string Email { get; set; }
     [Required (ErrorMessage = "Role is required")]
     public required Role Role { get; set; }
+    public bool? Student { get; set; } = null;
 }
 
 public class DeleteUserDTO{

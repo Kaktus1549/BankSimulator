@@ -804,4 +804,24 @@ public class BankaDB : DbContext
         }
         return Task.FromResult<DBStatistics?>(statistics);
     }
+
+    public Task ChangeStudentStatus(string email, bool isStudent){
+        // Get user by email
+        DBUser? user = Users.FirstOrDefault(u => u.Email == email);
+        if (user == null){
+            throw new Exception("User not found");
+        }
+        if (user.Role != Role.User){
+            throw new Exception("Admin or banker cannot have student status");
+        }
+        // Get saving account for user
+        DBSavingAccount? savingAccount = SavingAccounts.FirstOrDefault(a => a.UserID == user.UserID);
+        if (savingAccount == null){
+            throw new Exception("Saving account not found");
+        }
+        // Change student status
+        savingAccount.Student = isStudent;
+        SaveChanges();
+        return Task.CompletedTask;
+    }
 }

@@ -45,17 +45,31 @@
                                                 <label for="inputPasswordConfirm">Confirm Password</label>
                                             </div>
                                         </div>
-                                        <div class="form-floating mb-3 mt-3">
-                                            <select class="form-select" id="inputUserType" aria-label="Select user type">
-                                                <option disabled>Choose user type</option>
-                                                <option value="User" selected>User</option>
-                                                @if (role == "Admin")
-                                                {
-                                                    <option value="Banker">Banker</option>
-                                                    <option value="Admin">Admin</option>
-                                                }
-                                            </select>
-                                            <label for="inputUserType" style="margin-left: 12.5px;">User Type</label>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating mb-3 mt-3">
+                                                <select class="form-select" id="inputUserType" aria-label="Select user type">
+                                                    <option disabled>Choose user type</option>
+                                                    <option value="User" selected>User</option>
+                                                    @if (role == "Admin")
+                                                    {
+                                                        <option value="Banker">Banker</option>
+                                                        <option value="Admin">Admin</option>
+                                                    }
+                                                </select>
+                                                <label for="inputUserType">User Type</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6" id="student">
+                                            <div class="form-floating mb-3 mt-3">
+                                                <select class="form-select" id="inputStudent" aria-label="Is student">
+                                                    <option disabled>Is student</option>
+                                                    <option value="False" selected>False</option>
+                                                    <option value="True">True</option>
+                                                </select>
+                                                <label for="inputStudent">Student</label>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="mt-4 mb-0">
@@ -75,6 +89,18 @@
 </div>
 <script src="js/emailreg.js"></script>
 <script>
+    // If user is not selected, hide the student select
+    const inputUserType = document.getElementById('inputUserType');
+    const inputStudent = document.getElementById('student');
+    inputUserType.addEventListener('change', function() {
+        if (inputUserType.value === 'User') {
+            inputStudent.style.display = 'block';
+        } else {
+            inputStudent.style.display = 'none';
+        }
+    });
+
+
     function NullCheck(firstName, lastName, email, password, passwordConfirm) {
         // Check if any of the input fields are empty
         if (firstName === '' || lastName === '' || email === '' || password === '' || passwordConfirm === '') {
@@ -94,6 +120,7 @@
         const inputPassword = document.getElementById('inputPassword');
         const inputPasswordConfirm = document.getElementById('inputPasswordConfirm');
         const inputUserType = document.getElementById('inputUserType');
+        const inputStudent = document.getElementById('inputStudent');
 
         // Check if any of the input fields are empty
         if (!NullCheck(inputFirstName.value, inputLastName.value, inputEmail.value, inputPassword.value, inputPasswordConfirm.value)) {
@@ -118,7 +145,8 @@
             lastName: inputLastName.value,
             email: inputEmail.value,
             password: inputPassword.value,
-            role: roleId
+            role: roleId,
+            Student: inputStudent.value === 'True' ? true : false
         };
 
         // Send data to /api/register endpoint
