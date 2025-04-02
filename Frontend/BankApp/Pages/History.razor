@@ -87,6 +87,10 @@ else
 
         let res = data.result;
         let table = document.querySelector("table tbody");
+        while (table === null) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            table = document.querySelector("table tbody");
+        }
         res.forEach(element => {
             let tr = document.createElement("tr");
             let td1 = document.createElement("td");
@@ -129,7 +133,7 @@ else
     {
         // Wait 1ms, since because of some skill issue it throws an error that "FetchHistory" is not defined
         await Task.Delay(1);
-        await FetchData();
+        FetchData();
         isLoading = false;
         StateHasChanged();
     }
