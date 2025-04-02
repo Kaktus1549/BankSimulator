@@ -3,6 +3,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 using DotNetEnv;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace BankBackend{
     public class Program{
@@ -21,7 +22,7 @@ namespace BankBackend{
             return secret;
         }
 
-        public static void Main(string[] args){
+        public static async Task Main(string[] args){
             Env.Load();
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level,-14}] {Message:lj}{NewLine}{Exception}";
 
@@ -130,6 +131,8 @@ namespace BankBackend{
                         var dbContext = scope.ServiceProvider.GetRequiredService<BankaDB>();
                         dbContext.Database.Migrate();
                         Log.Information("Database migration completed successfully.");
+                        Log.Information("Creating default admin user...");
+                        await dbContext.EnsureMaster();
                     }
                     catch (Exception ex)
                     {

@@ -46,8 +46,6 @@ public class BankaDB : DbContext
         _masterEmail = configuration["MASTER_EMAIL"] ?? "admin@kaktusgame.eu";
         _masterPassword = configuration["MASTER_PASSWORD"] ?? "admin";
         _logger = logger;
-
-        this.EnsureMaster().Wait();
     }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){
         string connectionString = $"Server={_serverAddress};Port={_port};Database={_databaseName};Uid={_username};Pwd={_password};";
