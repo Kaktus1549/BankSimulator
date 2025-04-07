@@ -11,6 +11,11 @@
             You are a student, saving account has some limitations.
         </div>
     }
+    @if (CreditAccountBalance < 0 && role == "User" && maturityDate != DateTime.MinValue){
+        <div class="alert alert-danger" role="alert">
+            Your credit account is negative. Please pay your debt before @maturityDate.ToString("dd/MM/yyyy").
+        </div>
+    }
 
     @if (name == "Loading..."){
         <div class="alert alert-danger" role="alert">
@@ -142,6 +147,7 @@
     private string name = "Loading...";
     private string role = "User";
     private bool student = false;
+    private DateTime maturityDate;
 
     private string lastUpdated = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -164,6 +170,10 @@
             FreeAccountBalance = int.Parse(list[3]);
             SavingAccountBalance = int.Parse(list[4]);
             CreditAccountBalance = int.Parse(list[5]);
+            if (CreditAccountBalance < 0){
+                DateTime fetchDate = await JS.InvokeAsync<DateTime>("FetchLSKey", "maturityDate");
+                maturityDate = fetchDate;
+            }
         }
     }
 

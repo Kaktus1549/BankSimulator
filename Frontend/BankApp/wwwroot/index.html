@@ -132,6 +132,9 @@
                     localStorage.setItem('FreeAccountBalance', data[0]);
                     localStorage.setItem('SavingAccountBalance', data[1]);
                     localStorage.setItem('CreditAccountBalance', data[2]);
+                    if (data.length == 4){
+                        localStorage.setItem('maturityDate', data[3]);
+                    }
                 }
                 // Create list and return the values
                 var list = [localStorage.getItem("FreeAccountNumber"), localStorage.getItem("SavingAccountNumber"), localStorage.getItem("CreditAccountNumber"), localStorage.getItem("FreeAccountBalance"), localStorage.getItem("SavingAccountBalance"), localStorage.getItem("CreditAccountBalance")];

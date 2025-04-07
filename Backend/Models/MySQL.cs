@@ -335,17 +335,17 @@ public class BankaDB : DbContext
         if (!CheckAccountExistence(srcAccID, srcAccountType)){
             _logger.Error($"Source account {srcAccID} does not exist");
             LogMoneyTransfer(UserID, srcAccID, destAccID, srcAccountType, destAccountType, amount, false);
-            throw new Exception("Account does not exist");
+            throw new Exception("Source account does not exist");
         }
         if(!CheckAccountExistence(destAccID, destAccountType)){
             _logger.Error($"Destination account {destAccID} does not exist");
             LogMoneyTransfer(UserID, srcAccID, destAccID, srcAccountType, destAccountType, amount, false);
-            throw new Exception("Account does not exist");
+            throw new Exception("Destination account does not exist");
         }
 
         // Get source and destination accounts
         var srcAcc = srcAccountType switch{
-            AccountType.Free => FreeAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
+            AccountType.Free => FreeAccounts.Where(a => a.AccID == srcAccID && a.GetType() == typeof(DBFreeAccount)).FirstOrDefault(),
             AccountType.Saving => SavingAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
             AccountType.Credit => CreditAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
             _ => null
@@ -447,9 +447,9 @@ public class BankaDB : DbContext
         return Task.FromResult<DBUser?>(dbUser);
     }
 
-    public Task<List<int>> GetBalance(int userID){
+    public Task<List<object?>> GetBalance(int userID){
         DBFreeAccount? freeAccount = FreeAccounts
-            .Where(a => a.UserID == userID )
+            .Where(a => a.UserID == userID && a.GetType() == typeof(DBFreeAccount))
             .FirstOrDefault();
         DBSavingAccount? savingAccount = SavingAccounts
             .Where(a => a.UserID == userID )
@@ -458,11 +458,12 @@ public class BankaDB : DbContext
             .Where(a => a.UserID == userID )
             .FirstOrDefault();
 
-        var balances = new List<int>
+        var balances = new List<object?>
         {
-            freeAccount != null ? (int)freeAccount.Balance : 0,
-            savingAccount != null ? (int)savingAccount.Balance : 0,
-            creditAccount != null ? (int)creditAccount.Balance : 0
+            freeAccount != null ? freeAccount.Balance : 0,
+            savingAccount != null ? savingAccount.Balance : 0,
+            creditAccount != null ? creditAccount.Balance : 0,
+            creditAccount != null && creditAccount.Balance < 0 ? creditAccount.MaturityDate : null
         };
 
         if (freeAccount == null)
@@ -486,7 +487,7 @@ public class BankaDB : DbContext
         }
         List<string> accountIDs = new List<string>();
         DBFreeAccount? freeAccount = FreeAccounts
-            .Where(a => a.UserID == userID )
+            .Where(a => a.UserID == userID && a.GetType() == typeof(DBFreeAccount))
             .FirstOrDefault();
         DBSavingAccount? savingAccount = SavingAccounts
             .Where(a => a.UserID == userID )
