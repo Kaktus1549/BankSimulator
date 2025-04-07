@@ -343,6 +343,7 @@ public class BankaDB : DbContext
             throw new Exception("Destination account does not exist");
         }
 
+
         // Get source and destination accounts
         var srcAcc = srcAccountType switch{
             AccountType.Free => FreeAccounts.Where(a => a.AccID == srcAccID && a.GetType() == typeof(DBFreeAccount)).FirstOrDefault(),
@@ -350,6 +351,12 @@ public class BankaDB : DbContext
             AccountType.Credit => CreditAccounts.Where(a => a.AccID == srcAccID ).FirstOrDefault(),
             _ => null
         };
+        //Check if UserID is really owner of SrcAcc
+        if (srcAcc != null && srcAcc.UserID != UserID){
+            _logger.Error($"User {UserID} has tried to transfer money from account {srcAccID} but is not owner of the account");
+            LogMoneyTransfer(UserID, srcAccID, destAccID, srcAccountType, destAccountType, amount, false);
+            throw new Exception("You are not owner of this account");
+        }
         var destAcc = destAccountType switch{
             AccountType.Free => FreeAccounts.Where(a => a.AccID == destAccID ).FirstOrDefault(),
             AccountType.Saving => SavingAccounts.Where(a => a.AccID == destAccID ).FirstOrDefault(),
